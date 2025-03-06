@@ -9,6 +9,6 @@ roboflow:
   url: https://universe.roboflow.com/kyles-workspace/basketball-players-detection-flths/dataset/2
   version: 2
   workspace: kyles-workspace
-test: ../test/images
-train: basketball-players-detection-2/train/images
-val: basketball-players-detection-2/valid/images
+test: C:\Users\klein\Documents\GitHub\BoltAthletics\AI\training\basketball-players-detection-2\basketball-players-detection-2\test\images
+train: C:\Users\klein\Documents\GitHub\BoltAthletics\AI\training\basketball-players-detection-2\basketball-players-detection-2\train\images
+val: C:\Users\klein\Documents\GitHub\BoltAthletics\AI\training\basketball-players-detection-2\basketball-players-detection-2\valid\images
