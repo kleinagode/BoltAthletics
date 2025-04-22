@@ -153,8 +153,6 @@ class Tracker:
 
         return frame
 
-
-
     def draw_annotations(self, video_frames, tracks):
 
         # With custom bounding boxes
