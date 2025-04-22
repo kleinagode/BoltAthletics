@@ -3,6 +3,7 @@
 from util import read_video, save_video
 from trackers import Tracker
 from team_assigner import TeamAssigner
+from camera_movement_estimator import CameraMovementEstimator
 
 
 def main():
@@ -15,6 +16,16 @@ def main():
     tracks = tracker.get_obj_tracks(video_frames,
                                     read_from_stub=True,
                                     stub_path='stubs/track_stubs.pkl')
+
+    # Get object positions 
+    tracker.add_position_to_tracks(tracks)
+
+    # Camera Movement Estimator
+    camera_movement_estimator = CameraMovementEstimator(video_frames[0])
+    camera_movement_per_frame = camera_movement_estimator.get_camera_movement(video_frames,
+                                                                                read_from_stub=True,
+                                                                                stub_path='stubs/camera_movement_stub.pkl')
+    camera_movement_estimator.add_adjust_positions_to_tracks(tracks,camera_movement_per_frame)
 
     # Assign Players to Teams
     team_assigner = TeamAssigner()
@@ -34,6 +45,8 @@ def main():
     # Draw Object Tracks
     outut_video_frames = tracker.draw_annotations(video_frames, tracks)
 
+    # Draw Camera Movement
+    outut_video_frames = camera_movement_estimator.draw_camera_movement(outut_video_frames, camera_movement_per_frame)
 
     # Save video and match the fps
     save_video(outut_video_frames, 'output_videos/Bolt_atletics_analyzed.avi', fps)

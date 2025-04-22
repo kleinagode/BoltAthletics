@@ -7,13 +7,26 @@ import cv2
 
 # Go in the root folder
 sys.path.append("../")
-from util import get_center_of_bbox, get_width_of_bbox
+from util import get_center_of_bbox, get_width_of_bbox, get_foot_position
 
 class Tracker:
 
     def __init__(self, model_path):
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
+
+
+    def add_position_to_tracks(sekf,tracks):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    bbox = track_info['bbox']
+                    if object == 'ball':
+                        position= get_center_of_bbox(bbox)
+                    else:
+                        position = get_foot_position(bbox)
+                    tracks[object][frame_num][track_id]['position'] = position
+
 
     def detect_frames(self, frames):
         batch_size = 20
