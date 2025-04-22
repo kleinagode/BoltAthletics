@@ -1,1 +1,2 @@
 from .scouting_report_generator import ScoutingReportGenerator
+from .stats_scraper import GameStatsScraper

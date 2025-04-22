@@ -6,7 +6,8 @@ from team_assigner import TeamAssigner
 from camera_movement_estimator import CameraMovementEstimator
 from view_transformer import ViewTransformer
 from speed_and_distance_estimator import SpeedAndDistance_Estimator
-from scouting_report_generator import ScoutingReportGenerator
+from scouting_report_generator import ScoutingReportGenerator, GameStatsScraper
+
 
 def main():
     # Read Videos and fps
@@ -67,12 +68,16 @@ def main():
     save_video(output_video_frames, 'output_videos/Bolt_atletics_analyzed.avi', fps)
 
     # Generate scouting report
+    ## Scrape Stats
+    stats_scraper = GameStatsScraper(url= 'https://www.sports-reference.com/cbb/boxscores/2025-04-07-20-houston.html#box-score-advanced-florida')
+    game_stats = stats_scraper.get_game_stats()
+
     scouting_report = ScoutingReportGenerator()
-    report_data = scouting_report.generate_report(tracks, min_frames=300)
+    report_data = scouting_report.generate_report(tracks, min_frames=300) # Add the gamestats_df when finished
 
     # Save scouting report
     scouting_report.save_as_json()
-    scouting_report.save_as_pdf(logo_path='img/BB_Tagline.svg')
+    scouting_report.save_as_pdf(logo_path='img/BB_Tagline.svg') # Add the gamestats_df when finished
 
     print("Done...")
 

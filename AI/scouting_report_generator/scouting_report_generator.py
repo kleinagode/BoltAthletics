@@ -12,7 +12,11 @@ class ScoutingReportGenerator:
     def __init__(self):
         self.report = defaultdict(dict)
 
-    def generate_report(self, tracks, min_frames):
+    def generate_report(self, tracks, min_frames, game_stats_df=None):
+        # Add scraped game stats at the top of the report
+        if game_stats_df is not None:
+            self.display_game_stats(game_stats_df)
+
         player_stats = defaultdict(lambda: {"total_distance": 0, "speed_readings": [], "frames_present": 0})
 
         # Gather data from track file
@@ -81,6 +85,11 @@ class ScoutingReportGenerator:
 
         return self.report
 
+    def display_game_stats(self, game_stats_df):
+        """Display the scraped game stats (e.g., from the advanced box score) at the top of the report."""
+        print("Displaying game stats at the top of the report:")
+        print(game_stats_df)
+
     def save_as_json(self, path='output_reports/scouting_report.json'):
         # Convert keys to str to ensure JSON compatibility
         report_str_keys = {str(k): v for k, v in self.report.items()}
@@ -88,7 +97,7 @@ class ScoutingReportGenerator:
         with open(path, 'w') as f:
             json.dump(report_str_keys, f, indent=4)
 
-    def save_as_pdf(self, path='output_reports/scouting_report.pdf', title="SCOUTING REPORT", logo_path=None):
+    def save_as_pdf(self, path='output_reports/scouting_report.pdf', title="SCOUTING REPORT", logo_path=None, game_stats_df=None):
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
         c = canvas.Canvas(path, pagesize=letter)
@@ -139,9 +148,40 @@ class ScoutingReportGenerator:
         # Set initial Y position after title and rule
         y = line_y - MARGIN_BUFFER  # Starting Y position, buffer after horizontal line
 
+        # --- Game Stats ---
+        if game_stats_df is not None:
+            c.setFont("Helvetica", 10)
+            c.setFillColor(colors.black)
+            c.drawString(LEFT_MARGIN, y, "Game Stats (Advanced Box Score):")
+            y -= 18
+
+            # Flattening multi-level columns for easier access
+            game_stats_df.columns = ['_'.join(col).strip() for col in game_stats_df.columns.values]
+
+            # Display cleaned game stats (advanced box score) in tabular format
+            column_widths = [100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]  # Example column widths
+            header = list(game_stats_df.columns)
+            
+            # Draw table header
+            c.setFont("Helvetica-Bold", 10)
+            for i, header_name in enumerate(header):
+                c.drawString(LEFT_MARGIN + sum(column_widths[:i]), y, header_name)
+            y -= 15
+
+            # Draw table rows
+            c.setFont("Helvetica", 10)
+            for index, row in game_stats_df.iterrows():
+                for i, col in enumerate(header):
+                    c.drawString(LEFT_MARGIN + sum(column_widths[:i]), y, str(row[col]))
+                y -= 12
+                if y < BOTTOM_MARGIN:
+                    c.showPage()  # Start a new page if space runs out
+                    c.setFont("Helvetica", 10)
+                    y = height - TOP_MARGIN  # Reset Y to top of new page
+            y -= 10  # Extra space after game stats section
+
         # --- Player Stats ---
         c.setFont("Helvetica", 12)
-
         for player_id, stats in self.report.items():
             if player_id == "TEAM_AVERAGES":
                 continue
@@ -161,21 +201,24 @@ class ScoutingReportGenerator:
             c.setFont("Helvetica-Bold", 14)
             c.setFillColor(colors.black)
             c.drawString(LEFT_MARGIN + 10, y - 20, f"Player {player_id}:")
-
             y -= 40  # Adjusting Y for player stats
 
             # Player stats
             c.setFont("Helvetica", 12)
-            c.drawString(LEFT_MARGIN + 10, y, f"Average Speed: {stats['average_speed']} km/h")
-            c.drawString(LEFT_MARGIN + 200, y, f"Total Distance: {stats['total_distance']} m")
-            c.drawString(LEFT_MARGIN + 400, y, f"Frames: {stats['frames_present']}")
+            if "average_speed" in stats:
+                c.drawString(LEFT_MARGIN + 10, y, f"Average Speed: {stats['average_speed']} km/h")
+            if "total_distance" in stats:
+                c.drawString(LEFT_MARGIN + 200, y, f"Total Distance: {stats['total_distance']} m")
+            if "frames_present" in stats:
+                c.drawString(LEFT_MARGIN + 400, y, f"Frames: {stats['frames_present']}")
             y -= 18
 
-            c.drawString(LEFT_MARGIN + 10, y, f"Activity Level: {stats['activity_level']}")
-            y -= 18
+            if "activity_level" in stats:
+                c.drawString(LEFT_MARGIN + 10, y, f"Activity Level: {stats['activity_level']}")
+                y -= 18
 
             # Notes display
-            if stats.get("notes"):
+            if "notes" in stats and stats["notes"]:
                 notes_line = f"Notes: {', '.join(stats['notes'])}"
                 c.drawString(LEFT_MARGIN + 10, y, notes_line)
                 y -= 18
@@ -192,8 +235,10 @@ class ScoutingReportGenerator:
             team_stats = self.report["TEAM_AVERAGES"]
             c.setFont("Helvetica", 12)
             y = height - TOP_MARGIN - 50
-            c.drawString(LEFT_MARGIN, y, f"Average Speed: {team_stats['average_speed']} km/h")
-            y -= 20
-            c.drawString(LEFT_MARGIN, y, f"Average Distance: {team_stats['average_distance']} m")
+            if "average_speed" in team_stats:
+                c.drawString(LEFT_MARGIN, y, f"Average Speed: {team_stats['average_speed']} km/h")
+                y -= 20
+            if "average_distance" in team_stats:
+                c.drawString(LEFT_MARGIN, y, f"Average Distance: {team_stats['average_distance']} m")
 
         c.save()
