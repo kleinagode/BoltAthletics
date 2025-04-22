@@ -1,0 +1,73 @@
+{
+    "1": {
+        "average_speed": 3.59,
+        "total_distance": 8363.24,
+        "frames_present": 635,
+        "activity_level": "Highly Active",
+        "notes": []
+    },
+    "7": {
+        "average_speed": 6.24,
+        "total_distance": 4215.95,
+        "frames_present": 355,
+        "activity_level": "Highly Active",
+        "notes": []
+    },
+    "8": {
+        "average_speed": 3.83,
+        "total_distance": 8685.5,
+        "frames_present": 640,
+        "activity_level": "Highly Active",
+        "notes": []
+    },
+    "10": {
+        "average_speed": 4.54,
+        "total_distance": 550.11,
+        "frames_present": 328,
+        "activity_level": "Low Activity",
+        "notes": [
+            "Low movement for frame count \u2013 possible role player"
+        ]
+    },
+    "22": {
+        "average_speed": 5.99,
+        "total_distance": 3693.78,
+        "frames_present": 327,
+        "activity_level": "Highly Active",
+        "notes": []
+    },
+    "23": {
+        "average_speed": 5.02,
+        "total_distance": 3247.77,
+        "frames_present": 355,
+        "activity_level": "Moderately Active",
+        "notes": []
+    },
+    "49": {
+        "average_speed": 5.8,
+        "total_distance": 4439.77,
+        "frames_present": 343,
+        "activity_level": "Highly Active",
+        "notes": []
+    },
+    "158": {
+        "average_speed": 9.3,
+        "total_distance": 2807.69,
+        "frames_present": 512,
+        "activity_level": "Moderately Active",
+        "notes": [
+            "High-speed mover"
+        ]
+    },
+    "162": {
+        "average_speed": 7.81,
+        "total_distance": 800.41,
+        "frames_present": 348,
+        "activity_level": "Low Activity",
+        "notes": []
+    },
+    "TEAM_AVERAGES": {
+        "average_speed": 5.79,
+        "average_distance": 4089.36
+    }
+}

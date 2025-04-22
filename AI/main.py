@@ -6,6 +6,7 @@ from team_assigner import TeamAssigner
 from camera_movement_estimator import CameraMovementEstimator
 from view_transformer import ViewTransformer
 from speed_and_distance_estimator import SpeedAndDistance_Estimator
+from scouting_report_generator import ScoutingReportGenerator
 
 def main():
     # Read Videos and fps
@@ -64,6 +65,14 @@ def main():
 
     # Save video and match the fps
     save_video(output_video_frames, 'output_videos/Bolt_atletics_analyzed.avi', fps)
+
+    # Generate scouting report
+    scouting_report = ScoutingReportGenerator()
+    report_data = scouting_report.generate_report(tracks, min_frames=300)
+
+    # Save scouting report
+    scouting_report.save_as_json()
+    scouting_report.save_as_pdf(logo_path='img/BB_Logo.png')
 
 if __name__ == '__main__':
     main()

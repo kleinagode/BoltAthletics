@@ -1,0 +1,1 @@
+from .scouting_report_generator import ScoutingReportGenerator
