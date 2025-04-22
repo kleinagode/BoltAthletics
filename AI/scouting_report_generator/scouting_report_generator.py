@@ -1,9 +1,11 @@
 import json
 import os
-
 from collections import defaultdict
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
+from reportlab.lib import colors
 
 
 class ScoutingReportGenerator:
@@ -86,72 +88,112 @@ class ScoutingReportGenerator:
         with open(path, 'w') as f:
             json.dump(report_str_keys, f, indent=4)
 
-    def save_as_pdf(self, path='output_reports/scouting_report.pdf', title="Scouting Report", logo_path=None):
+    def save_as_pdf(self, path='output_reports/scouting_report.pdf', title="SCOUTING REPORT", logo_path=None):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        
+
         c = canvas.Canvas(path, pagesize=letter)
         width, height = letter
 
-        # Add company logo (if available)
+        # --- Margin Settings ---
+        TOP_MARGIN = 60
+        BOTTOM_MARGIN = 50
+        LEFT_MARGIN = 50
+        RIGHT_MARGIN = 50
+        MARGIN_BUFFER = 20  # Buffer space before bottom
+        PLAYER_BLOCK_HEIGHT = 120  # Height of each player block, including the margin
+        PLAYER_BLOCK_SPACING = 60  # Space between player blocks
+
+        # --- SVG LOGO POSITIONING SETTINGS ---
+        logo_x = width - 120  # Horizontal position from left
+        logo_y = height - 70  # Vertical position from bottom
+
         if logo_path and os.path.exists(logo_path):
-            logo_width, logo_height = 100, 50  # You can adjust this to fit your logo size
-            c.drawImage(logo_path, 50, height - 50 - logo_height, logo_width, logo_height)
+            if logo_path.lower().endswith(".svg"):
+                drawing = svg2rlg(logo_path)
 
+                scale = 0.15
+                drawing.width *= scale
+                drawing.height *= scale
+                drawing.scale(scale, scale)
 
-        # Title
+                renderPDF.draw(drawing, c, logo_x, logo_y)
+            else:
+                logo_width, logo_height = 100, 50  # Default for raster logos
+                c.drawImage(logo_path, 50, height - 50 - logo_height, logo_width, logo_height)
+
+        # --- Title ---
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(50 + 120, height - 50, title)  # Add 120 to offset for logo space
+        c.setFillColor(colors.HexColor("#3478F8"))
+        text_width = c.stringWidth(title, "Helvetica-Bold", 16)
+        title_x = (width - text_width) / 2
+        title_y = height - TOP_MARGIN
+        c.drawString(title_x, title_y, title)
+        c.setFillColor(colors.black)
 
-        y = height - 90
+        # --- Horizontal Rule ---
+        line_y = title_y - 20  # Position of the line
+        c.setStrokeColor(colors.HexColor("#F68718"))
+        c.setLineWidth(1.5)
+        c.line(LEFT_MARGIN, line_y, width - RIGHT_MARGIN, line_y)
+
+        # Set initial Y position after title and rule
+        y = line_y - MARGIN_BUFFER  # Starting Y position, buffer after horizontal line
+
+        # --- Player Stats ---
         c.setFont("Helvetica", 12)
 
-        # Draw individual player stats with large separation between players
         for player_id, stats in self.report.items():
             if player_id == "TEAM_AVERAGES":
-                continue  # Skip team averages here
+                continue
 
-            # Add a large separation between players
-            y -= 30
+            # Check if there is enough space for the player block, if not start a new page
+            if y - PLAYER_BLOCK_HEIGHT < BOTTOM_MARGIN:
+                c.showPage()  # Start a new page
+                c.setFont("Helvetica", 12)
+                y = height - TOP_MARGIN  # Reset Y to the top of the new page
 
-            # Player info header
+            # Draw a light grey block background for each player
+            c.setFillColor(colors.HexColor("#f0f0f0"))  # Light grey
+            c.setStrokeColor(colors.HexColor("#3478F8"))
+            c.rect(LEFT_MARGIN, y - PLAYER_BLOCK_HEIGHT, width - LEFT_MARGIN - RIGHT_MARGIN, PLAYER_BLOCK_HEIGHT, fill=1)  # Draw the rectangle
+
+            # Player Name
             c.setFont("Helvetica-Bold", 14)
-            c.drawString(50, y, f"Player {player_id}:")
-            y -= 20
+            c.setFillColor(colors.black)
+            c.drawString(LEFT_MARGIN + 10, y - 20, f"Player {player_id}:")
 
+            y -= 40  # Adjusting Y for player stats
+
+            # Player stats
             c.setFont("Helvetica", 12)
-
-            # Each stat on a new line
-            c.drawString(50, y, f"Average Speed: {stats['average_speed']} km/h")
-            y -= 18
-            c.drawString(50, y, f"Total Distance: {stats['total_distance']} m")
-            y -= 18
-            c.drawString(50, y, f"Frames: {stats['frames_present']}")
-            y -= 18
-            c.drawString(50, y, f"Activity Level: {stats['activity_level']}")
+            c.drawString(LEFT_MARGIN + 10, y, f"Average Speed: {stats['average_speed']} km/h")
+            c.drawString(LEFT_MARGIN + 200, y, f"Total Distance: {stats['total_distance']} m")
+            c.drawString(LEFT_MARGIN + 400, y, f"Frames: {stats['frames_present']}")
             y -= 18
 
-            # Add notes (if any)
+            c.drawString(LEFT_MARGIN + 10, y, f"Activity Level: {stats['activity_level']}")
+            y -= 18
+
+            # Notes display
             if stats.get("notes"):
                 notes_line = f"Notes: {', '.join(stats['notes'])}"
-                c.drawString(50, y, notes_line)
+                c.drawString(LEFT_MARGIN + 10, y, notes_line)
                 y -= 18
 
-            if y < 60:  # Check for space on the page and move to the next page if necessary
-                c.showPage()
-                c.setFont("Helvetica", 12)
-                y = height - 60
+            # Add space before the next block
+            y -= PLAYER_BLOCK_SPACING  # Add vertical space between blocks
 
-        # New page for team stats
+        # --- Team Averages ---
         if "TEAM_AVERAGES" in self.report:
             c.showPage()
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(50, height - 50, "Team Averages")
+            c.drawString(LEFT_MARGIN, height - TOP_MARGIN, "Team Averages")
 
             team_stats = self.report["TEAM_AVERAGES"]
             c.setFont("Helvetica", 12)
-            y = height - 100
-            c.drawString(50, y, f"Average Speed: {team_stats['average_speed']} km/h")
+            y = height - TOP_MARGIN - 50
+            c.drawString(LEFT_MARGIN, y, f"Average Speed: {team_stats['average_speed']} km/h")
             y -= 20
-            c.drawString(50, y, f"Average Distance: {team_stats['average_distance']} m")
-            
+            c.drawString(LEFT_MARGIN, y, f"Average Distance: {team_stats['average_distance']} m")
+
         c.save()

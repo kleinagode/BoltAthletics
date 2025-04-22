@@ -72,7 +72,9 @@ def main():
 
     # Save scouting report
     scouting_report.save_as_json()
-    scouting_report.save_as_pdf(logo_path='img/BB_Logo.png')
+    scouting_report.save_as_pdf(logo_path='img/BB_Tagline.svg')
+
+    print("Done...")
 
 if __name__ == '__main__':
     main()
